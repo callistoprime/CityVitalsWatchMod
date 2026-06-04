@@ -39,6 +39,7 @@
         private UISlider highSchoolMeter;
         private UISlider universityMeter;
         private UISlider employmentMeter;
+        private UISlider jobAvailabilityMeter;
 
         /// <summary>
         /// The button in the main UI used to toggle the panel's visibility.
@@ -315,7 +316,18 @@
                 this.employmentMeter = this.CreateGradientMeter("Employment", employmentTexture, negativeColor, targetColor);
                 this.PositionInfoControl(this.employmentMeter, ref zOrder, this.CreateInfoManagerClickHandler(InfoManager.InfoMode.Density, InfoManager.SubInfoMode.Default));
             }
-        }
+
+            // Set up job availability controls
+            if (CityVitalsWatch.Settings.DisplayJobAvailability) {
+                var jobAvailabilityLabel = this.CreateLabel(healthPanel.Find<UILabel>("Incinerator"));
+                jobAvailabilityLabel.localeID = "STATS_10";
+                this.PositionInfoControl(jobAvailabilityLabel, ref zOrder, this.CreateInfoManagerClickHandler(InfoManager.InfoMode.Density, InfoManager.SubInfoMode.Default));
+
+                var jobAvailabilityTexture = garbagePanel.Find<UISlider>("LandfillMeter").Find<UITextureSprite>("LandfillGradient");
+                this.jobAvailabilityMeter = this.CreateGradientMeter("JobAvailability", jobAvailabilityTexture, negativeColor, targetColor);
+                this.PositionInfoControl(this.jobAvailabilityMeter, ref zOrder, this.CreateInfoManagerClickHandler(InfoManager.InfoMode.Density, InfoManager.SubInfoMode.Default));
+            }
+        }        
 
 
         /// <summary>
@@ -648,6 +660,8 @@
             int universityCapacity = 0;
             int universityNeed = 0;
             float unemployment = 0f;
+            int filledJobs = 0;
+            int totalJobs = 0;
 
             // Grab all of the stat values from the singleton DistrictManager instance
             if (Singleton<DistrictManager>.exists) {
@@ -680,6 +694,8 @@
                 universityCapacity = info.GetEducation3Capacity();
                 universityNeed = info.GetEducation3Need();
                 unemployment = info.GetUnemployment();
+                filledJobs = info.GetWorkerCount();
+                totalJobs = info.GetWorkplaceCount();
             }
 
             // Fire hazard is stored in the singleton ImmaterialResourceManager instead
@@ -777,6 +793,12 @@
             if (this.employmentMeter != null) {
                 this.employmentMeter.value = Mathf.Round(100f - unemployment);
                 this.employmentMeter.tooltip = this.employmentMeter.value + "%";
+            }
+
+            if (this.jobAvailabilityMeter != null) {
+                float jobAvailability = 100f * filledJobs / totalJobs;
+                this.jobAvailabilityMeter.value = Mathf.Round(100f - jobAvailability);
+                this.jobAvailabilityMeter.tooltip = this.GetUsageString(totalJobs, totalJobs - filledJobs); //show available jobs and total jobs
             }
         }
 
